@@ -1,0 +1,209 @@
+# LC_ALL=en_US
+# fucking vim habbits
+alias :q=exit
+alias :qa=exit
+
+# enable color support of ls and also add handy aliases
+alias pyweb='python -m SimpleHTTPServer'
+
+## a quick way to get out of current directory ##
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias ......='cd ../../../../..'
+
+alias cpwd='echo `pwd` | pbcopy'
+# some more ls aliases
+if [ -x /usr/bin/dircolors ]; then
+    eval "`dircolors -b`"
+    alias ls='ls --color=auto'
+fi
+alias ll='ls -l'
+alias la='ls -la'
+alias l='ls -G -a'
+alias lag='ls -la | ag'
+alias -- -='cd -'
+
+#git aliases
+alias ga='git add'
+alias gp='git push'
+alias gpo='git push origin master:master'
+alias gl='git lg'
+alias gs='git status'
+alias gd='git diff'
+alias gdc='git diff --cached'
+alias gm='git commit -m'
+alias gma='git commit -am'
+alias gb='git branch'
+alias gra='git remote add'
+alias gr='git remote -v'
+alias gpu='git pull'
+alias gcl='git clone'
+alias be='bundle exec'
+alias br='bundle exec rake'
+
+# rake aliases
+alias r='rake'
+alias rt='rake -T'
+
+export EDITOR=vim
+# set vi as editing mode
+set -o vi
+
+nix-search-local()
+{
+	echo "Searching..."
+	nix-env -f ~/dev/git/nixpkgs -qaP --no-name --description "*" | ag -i "$1" 2>/dev/null &
+	pid=$! # Process Id of the previous running command
+
+	spin='-\|/'
+
+	i=0
+	while kill -0 $pid 2>/dev/null
+	do
+		i=$(( (i+1) %4 ))
+		printf "\r${spin:$i:1}"
+		sleep .1
+	done
+}
+nix-search-remote()
+{
+	echo "Searching..."
+	nix-env -qaP --no-name --description "*" | ag -i "$1" 2>/dev/null &
+	pid=$! # Process Id of the previous running command
+
+	spin='-\|/'
+
+	i=0
+	while kill -0 $pid 2>/dev/null
+	do
+		i=$(( (i+1) %4 ))
+		printf "\r${spin:$i:1}"
+		sleep .1
+	done
+}
+nix-local-install(){
+	nix-env -f ~/dev/git/nixpkgs -iA "$1"
+}
+# show content of generation
+nix-show-gen(){
+  local gen=`nix-env --list-generations | grep current | awk '{print $1}'`
+  if [ $# -eq 0 ]; then
+    echo "[generation $gen of $gen]:"
+    nix-env -q "*"
+  else
+    2>/dev/null nix-env -G "$1"
+    nix-env -q "*"
+    2>/dev/null nix-env -G $gen
+  fi
+}
+# show diff of 2 of generations
+nix-show-diff(){
+  local gen=`nix-env --list-generations | grep current | awk '{print $1}'`
+  2>/dev/null nix-env -G "$1"
+  local c1=`nix-env -q "*"`
+  2>/dev/null nix-env -G "$2"
+  local c2=`nix-env -q "*"`
+  2>/dev/null nix-env -G $gen
+  diff -y <(echo "$c1") <(echo "$c2")
+}
+
+
+mcd(){
+  if [ "$#" -ne 1 ]; then
+      echo "usage: mcd dirname"
+      return 1
+  fi
+  mkdir -p $1;
+  cd $1
+}
+# move to directory and create it if it doesn't exist
+mmv(){
+  if [ "$#" -ne 2 ]; then
+      echo "usage: mmv folder2move destinationFolder"
+      return 1
+  fi
+  mkdir -p $2;
+  mv $1 $2
+}
+munzip(){
+  if [ "$#" -ne 2 ]; then
+      echo "usage: munzip zipfile targetDir"
+      return 1
+  fi
+  mkdir -p $2;
+  mv $1 $2;
+  cd $2;
+  unzip $1;
+  cd ..
+}
+
+echoPath() {
+  IFS=':' read -ra ADDR <<< "$PATH"
+  for i in "${ADDR[@]}"; do echo $i; done
+}
+duc() {
+  du -s "$@"/* | sort -n | cut -f 2- | xargs -Ix du -sh x;
+}
+# print sizes of folders sorted by size
+dud() {
+  du -s ./* | sort -n | cut -f 2- | xargs -Ix du -sh x
+}
+gitConvertProjectFilesToDos() {
+  for n in `git ls-files -m | grep 'project'`; do echo "todos $n"; todos $n; done
+}
+gitStatusAndDiffs() {
+  echo 'git status:'; git status
+  echo '*** workingDir 	<===> index 	  *** 	(git diff)'; git diff --stat
+  echo '*** workingDir 	<===> last commit *** 	(git diff HEAD)'; git diff --stat HEAD
+  echo '*** index 	<===> last commit *** 	(git diff --cached)'; git diff --stat --cached
+}
+gitLogsCustom() {
+  export since_time="yesterday"
+  if [ $# = 1 ]; then since_time=$1; fi
+  git log --format="%n%Cbluecommit %h %Creset:%Cred %an%Creset, %ar%n%Cgreen\"%s\"%Creset%nchanged files with this commit:" --since=$1 --name-only
+}
+gitLogsCustomShort() {
+  export since_time="one hour"
+  if [ $# = 1 ]; then since_time=$1; fi
+  git log --format="%n%Cbluecommit %h %Creset:%Cred %an%Creset, %ar%n%Cgreen\"%s\"%Creset" --since=$since_time
+}
+gitLogShort() {
+  export nr="10"
+  if [ $# = 1 ]; then nr=$1; fi
+   git log --format="%h %Cred%an %Cgreen\"%s\"%Creset" -$nr
+}
+gitLogTree() {
+  export nr="10"
+  if [ $# = 1 ]; then nr=$1; fi
+   git log --pretty=format="%h %Cred%an %Cgreen\"%s\"%Creset" --topo-order --graph -$nr
+}
+gitDeleteUntrackedFiles() {
+  for n in `git ls-files --others --exclude-standard --directory --no-empty-directory`; do echo "deleting: $n"; rm $n; done
+}
+gitDeleteUntrackedFolders() {
+  for n in `git ls-files --others --exclude-standard --directory --no-empty-directory`; do echo "deleting: $n"; rm -rfd $n; done
+}
+gitAddUntrackedFolders2gitignore() {
+  for n in `git ls-files --others --exclude-standard --directory --no-empty-directory`; do echo "adding to .gitignore: $n"; echo $n >> .gitignore; done
+}
+gitDiffNoProjectFiles() {
+  git ls-files -m | ack -v "(\.c|\.)project" | ack -v ".\.launch" | xargs git diff $1
+}
+h2d(){
+  echo "ibase=16; $@"|bc
+}
+d2h(){
+  echo "obase=16; $@"|bc
+}
+
+# immediately save to bashhistory and keep all entries
+export HISTCONTROL=ignoredups:erasedups  # no duplicate entries
+export HISTSIZE=100000                   # big big history
+export HISTFILESIZE=100000               # big big history
+shopt -s histappend                      # append to history, don't overwrite it
+
+# Save history after each command finishes
+export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"

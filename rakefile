@@ -1,0 +1,8 @@
+require 'rake/clean'
+
+desc 'build container'
+task :create, [:version] do |t, args|
+  version = args[:version]
+  sh "docker build -t box:#{version} ."
+end
+
