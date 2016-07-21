@@ -1,8 +1,34 @@
 require 'rake/clean'
 
-desc 'build container'
-task :create, [:version] do |t, args|
-  version = args[:version]
-  sh "docker build -t box:#{version} ."
+def get_current_version
+  s = `docker images | grep ^box | awk '{print $2,$3}'`
+  ss = s.split("\n")
+  entries = {}
+  latest = nil
+  ss.each do |line|
+    version,sha1 = line.split(/\s/)
+    if version == "latest"
+      latest = sha1
+    else
+      entries[sha1] = version
+    end
+  end
+  entries[latest]
 end
+
+def get_next_version
+  v = get_current_version
+  if match = v.match(/^(\d+)\.?(\d+)\.?(\*|\d+)$/i)
+    major, minor, trivial = match.captures
+  end
+  "#{major}.#{minor}.#{trivial.to_i+1}"
+end
+
+desc "build local version (minor version bump to #{get_next_version})"
+task :bump do
+  version = get_next_version
+  sh "docker build -t box:#{version} ."
+  sh "docker tag box:#{version} box:latest"
+end
+
 

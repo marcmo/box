@@ -57,6 +57,11 @@ RUN apt-get install -y software-properties-common python-software-properties \
   && update-alternatives --config editor \
   && pip3 install neovim \
   && pip2 install neovim
+
+# rust environment
+RUN curl -sSf https://static.rust-lang.org/rustup.sh | sh
+# RUN rustup update stable
+
 # Setup home environment
 RUN useradd -m dev \
   && chpasswd << "dev:dev" && echo "dev ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/dev_user && usermod -aG users dev \
