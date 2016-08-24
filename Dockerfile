@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     clang-3.6 \
     git \
     curl \
+    wget \
     cmake \
     tree \
     diffstat \
@@ -28,6 +29,17 @@ RUN apt-get update && apt-get install -y \
 RUN apt-add-repository ppa:brightbox/ruby-ng \
     && apt-get update && apt-get install -y \
     ruby$RB_RUBY_VERSION
+
+# Setup home environment
+RUN useradd -m dev \
+  && chpasswd << "dev:dev" && echo "dev ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/dev_user && usermod -aG users dev \
+  && mkdir -p /home/dev/bin \
+  && mkdir -p /home/dev/.config \
+  && mkdir -p /home/dev/lib
+ENV PATH /home/dev/bin:$PATH
+ENV PKG_CONFIG_PATH /home/dev/lib/pkgconfig
+ENV LD_LIBRARY_PATH /home/dev/lib
+ENV HOME /home/dev
 
 ## ruby environment
 COPY mapsize-0.2.2.gem mapsize-0.2.2.gem
@@ -61,16 +73,6 @@ RUN apt-get install -y software-properties-common python-software-properties \
 # rust environment
 RUN curl -sSf https://static.rust-lang.org/rustup.sh | sh
 # RUN rustup update stable
-
-# Setup home environment
-RUN useradd -m dev \
-  && chpasswd << "dev:dev" && echo "dev ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/dev_user && usermod -aG users dev \
-  && mkdir -p /home/dev/bin \
-  && mkdir -p /home/dev/.config \
-  && mkdir -p /home/dev/lib
-ENV PATH /home/dev/bin:$PATH
-ENV PKG_CONFIG_PATH /home/dev/lib/pkgconfig
-ENV LD_LIBRARY_PATH /home/dev/lib
 
 # Create a shared data volume
 # We need to create an empty file, otherwise the volume will
@@ -126,6 +128,14 @@ RUN ln -sv /usr/bin/clang-3.6 /usr/bin/clang \
   && ln -sv /usr/bin/clang-tblgen-3.6 /usr/bin/clang-tblgen \
   && ln -sv /usr/bin/clang-tidy-3.6 /usr/bin/clang-tidy
 
+## newer make version
+RUN wget http://ftp.gnu.org/gnu/make/make-4.2.tar.gz \
+  && tar xfvz make-4.2.tar.gz
+WORKDIR make-4.2
+RUN ./configure \
+  && make \
+  && cp make /home/dev/bin
+WORKDIR $HOME
 
 RUN chown -R dev: /home/dev
 USER dev
