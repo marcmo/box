@@ -6,6 +6,7 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 ENV RB_RUBY_VERSION 2.3
+ENV BAKE_VERSION 2.20.1
 
 RUN apt-get update && apt-get install -y \
     tar \
@@ -47,7 +48,7 @@ ENV CONFIGURE_OPTS --disable-install-doc
 RUN echo 'gem: --no-rdoc --no-ri' >> $HOME/.gemrc \
   && gem install rake \
   && gem install bundler \
-  && gem install bake-toolkit \
+  && gem install bake-toolkit -v $BAKE_VERSION \
   && gem install zip \
   && gem install rgen \
   && gem install rtext \
