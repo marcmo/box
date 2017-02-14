@@ -5,8 +5,6 @@ RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
-ENV RB_RUBY_VERSION 2.3
-ENV BAKE_VERSION 2.20.1
 
 RUN apt-get update && apt-get install -y \
     tar \
@@ -43,6 +41,9 @@ ENV LD_LIBRARY_PATH /home/dev/lib
 ENV HOME /home/dev
 
 ## ruby environment
+ENV RB_RUBY_VERSION 2.3
+ENV BAKE_VERSION 2.30.0
+
 COPY mapsize-0.2.2.gem mapsize-0.2.2.gem
 ENV CONFIGURE_OPTS --disable-install-doc
 RUN echo 'gem: --no-rdoc --no-ri' >> $HOME/.gemrc \
